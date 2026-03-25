@@ -431,8 +431,22 @@ img { max-width: 100%; display: block; }
 .cat-tree-child:hover { color: var(--accent); background: var(--accent-dim); }
 .cat-tree-child.active { color: var(--accent); font-weight: 600; background: var(--accent-dim); }
 
-/* ── Filter panel ── */
-.filter-section { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+/* ── Filter bar (horizontal, in content area) ── */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: flex-start;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-bar-section {
+  min-width: 180px;
+}
 
 .filter-label {
   font-size: 0.82rem;
@@ -441,27 +455,60 @@ img { max-width: 100%; display: block; }
   color: var(--text);
 }
 
-.filter-brand-item {
+.filter-brands-wrap {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
-  font-size: 0.82rem;
-  color: var(--text-2);
-  cursor: pointer;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
-.filter-brand-item input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+.filter-brand-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--text-2);
+  background: var(--bg);
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.filter-brand-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-brand-chip:has(input:checked) {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-brand-chip input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
   accent-color: var(--accent);
   cursor: pointer;
+  margin: 0;
+}
+
+.filter-chip-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .filter-brand-count {
-  margin-left: auto;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-3);
+}
+
+@media (max-width: 768px) {
+  .filter-bar { flex-direction: column; }
+  .filter-bar-section { min-width: 100%; }
 }
 
 /* Price range inputs */
