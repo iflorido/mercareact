@@ -1,54 +1,89 @@
 // src/pages/CategoryPage.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getCategoryProducts } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import SearchBar from '../components/SearchBar';
+import ShopLayout from '../components/ShopLayout';
+import FilterPanel from '../components/FilterPanel';
 
 export default function CategoryPage() {
-  const { categoryPath } = useParams();                // Obtiene "123-lacteos" de la URL
-  const categoryId = categoryPath.split('-')[0];       // Extrae "123"
+  const { categoryPath } = useParams();
+  const categoryId = categoryPath.split('-')[0];
 
   const [category, setCategory] = useState(null);
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
     getCategoryProducts(categoryId)
-      .then(data => setCategory(data))
-      .catch(err => console.error(err))
+      .then(data => {
+        setCategory(data);
+        // Recoger todos los productos de todas las subcategorías
+        // NO forzar brand — dejar el valor real de la API
+        const products = [];
+        (data.categories || []).forEach(sub => {
+          (sub.products || []).forEach(p => {
+            products.push(p);
+          });
+        });
+        setAllProducts(products);
+        setFilteredProducts(products);
+      })
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, [categoryId]);
 
-  if (loading) return <div className="text-center py-5"><div className="spinner-border text-success" /></div>;
-  if (!category) return <div className="text-center py-5"><h3>Categoría no encontrada</h3></div>;
+  const handleFilter = useCallback((filtered) => {
+    setFilteredProducts(filtered);
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+        <div className="spinner-border" style={{ color: 'var(--accent)' }} role="status" />
+      </div>
+    );
+  }
+
+  if (!category) {
+    return (
+      <div className="container-app" style={{ textAlign: 'center', padding: '4rem 0' }}>
+        <h3>Categoría no encontrada</h3>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mb-5">
-      <div className="row mb-4 justify-content-center">
-        <div className="col-md-8"><SearchBar /></div>
+    <div className="container-app" style={{ padding: '1.5rem 1.25rem 3rem' }}>
+      <div style={{ maxWidth: '500px', marginBottom: '1.5rem' }}>
+        <SearchBar />
       </div>
 
-      <div className="alert alert-light border shadow-sm text-center mb-4">
-        <h1 className="display-6 fw-bold text-success m-0">{category.name}</h1>
-      </div>
+      <ShopLayout currentCategoryId={categoryId}>
+        {/* Filtros — dentro del área de contenido, encima del título */}
+        <FilterPanel products={allProducts} onFilter={handleFilter} />
 
-      {category.categories.map(subCat => (
-        subCat.products && subCat.products.length > 0 && (
-          <div key={subCat.id}>
-            <h3 style={{ color: '#005432', borderBottom: '2px solid #9dcfbc', paddingBottom: '10px', marginTop: '2rem' }}>
-              {subCat.name}
-            </h3>
-            <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
-              {subCat.products.map(product => (
-                <div className="col" key={product.id}>
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
+        <h1 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>{category.name}</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
+          {filteredProducts.length} producto{filteredProducts.length !== 1 && 's'}
+        </p>
+
+        {filteredProducts.length > 0 ? (
+          <div className="product-card-grid">
+            {filteredProducts.map(product => (
+              <ProductCard key={product.id} product={product} categoryId={categoryId} />
+            ))}
           </div>
-        )
-      ))}
+        ) : (
+          <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-2)' }}>
+            <i className="bi bi-funnel" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem', color: 'var(--text-3)' }}></i>
+            <p>No hay productos que coincidan con los filtros.</p>
+          </div>
+        )}
+      </ShopLayout>
     </div>
   );
 }

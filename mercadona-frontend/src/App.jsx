@@ -13,29 +13,24 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import SuccessPage from './pages/SuccessPage';
 
-function App() {
+export default function App() {
   return (
     <CartProvider>
-      <div className="d-flex flex-direction-column" style={{ minHeight: '100vh', flexDirection: 'column' }}>
-        <Navbar />
+      <Navbar />
 
-        <main className="flex-grow-1">
-          <Routes>
-            {/* Cada Route equivale a un @app.get() de FastAPI */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/categories/:categoryPath" element={<CategoryPage />} />
-            <Route path="/products/:productPath" element={<ProductPage />} />
-            <Route path="/buscar" element={<SearchPage />} />
-            <Route path="/carrito" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/success" element={<SuccessPage />} />
-          </Routes>
-        </main>
+      <main style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/categories/:categoryPath" element={<CategoryPage />} />
+          <Route path="/products/:productPath" element={<ProductPage />} />
+          <Route path="/buscar" element={<SearchPage />} />
+          <Route path="/carrito" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/success" element={<SuccessPage />} />
+        </Routes>
+      </main>
 
-        <Footer />
-      </div>
+      <Footer />
     </CartProvider>
   );
 }
-
-export default App;

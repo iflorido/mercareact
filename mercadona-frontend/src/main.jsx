@@ -3,15 +3,17 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
-// 1. Bootstrap CSS + iconos
+// Bootstrap CSS (base - still needed for accordion, forms, grid utilities)
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Bootstrap JS still needed for accordion collapse
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
+// Bootstrap Icons
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
-// 2. Nuestros estilos globales (migrados de los HTML de Jinja2)
+// Our custom editorial theme (replaces Bootstrap CSS)
 import './styles/app.css';
-
-// 3. Bootstrap JS (necesario para acordeón, modales, toasts, etc.)
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 import App from './App';
 
