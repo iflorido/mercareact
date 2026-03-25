@@ -21,7 +21,7 @@ body {
 /* --- NAVBAR (todas las páginas) --- */
 @media (min-width: 768px) {
   .container {
-    max-width: 96% !important;
+    max-width: 1240px !important;
   }
 }
 

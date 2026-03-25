@@ -7,7 +7,7 @@ export default function Navbar() {
   const { cartCount } = useCart();
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top mb-3 pt-3 pb-2">
       <div className="container">
         <Link className="navbar-brand fw-bold text-success" to="/">
           <i className="bi bi-shop"></i> Mercadona API{' '}
