@@ -21,7 +21,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- NUEVO: Configuramos QEMU para poder emular ARM64 en el servidor de GitHub ---
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -46,9 +45,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./mercadona-frontend
           push: true
-          # --- NUEVO: Le decimos que compile para AMD64 (PC normal) y ARM64 (Tu VPS) ---
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
