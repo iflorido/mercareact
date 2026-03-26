@@ -1,17 +1,17 @@
 // src/components/FilterPanel.jsx
-// Panel de filtros horizontal — se coloca en el área de contenido, encima de los productos
-// Extrae marcas y precios reales de los productos visibles
-
 import { useState, useEffect, useMemo } from 'react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
 export default function FilterPanel({ products, onFilter }) {
-  // Extraer precios y marcas reales de los productos
   const { minPrice, maxPrice, brands } = useMemo(() => {
     if (!products || products.length === 0) {
       return { minPrice: 0, maxPrice: 100, brands: [] };
     }
+
+    // DEBUG: Log del primer producto para ver la estructura real
+    console.log('[FilterPanel] Primer producto recibido:', products[0]);
+    console.log('[FilterPanel] Keys:', Object.keys(products[0]));
 
     let min = Infinity, max = 0;
     const brandMap = {};
@@ -21,8 +21,6 @@ export default function FilterPanel({ products, onFilter }) {
       if (price < min) min = price;
       if (price > max) max = price;
 
-      // Extraer marca real: el campo brand viene de la API de Mercadona
-      // Para búsqueda SQLite no hay brand → se omite
       const brand = extractBrand(p);
       if (brand) {
         brandMap[brand] = (brandMap[brand] || 0) + 1;
@@ -36,6 +34,8 @@ export default function FilterPanel({ products, onFilter }) {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
 
+    console.log('[FilterPanel] Marcas extraídas:', brandList);
+
     return {
       minPrice: Math.floor(min * 100) / 100,
       maxPrice: Math.ceil(max * 100) / 100,
@@ -46,13 +46,11 @@ export default function FilterPanel({ products, onFilter }) {
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [selectedBrands, setSelectedBrands] = useState([]);
 
-  // Resetear filtros cuando cambian los productos base
   useEffect(() => {
     setPriceRange([minPrice, maxPrice]);
     setSelectedBrands([]);
   }, [minPrice, maxPrice]);
 
-  // Aplicar filtros
   useEffect(() => {
     if (!onFilter || !products) return;
 
@@ -112,8 +110,8 @@ export default function FilterPanel({ products, onFilter }) {
         </div>
       </div>
 
-      {/* Marcas */}
-      {brands.length > 1 && (
+      {/* Marcas — se muestra si hay al menos 1 marca */}
+      {brands.length > 0 && (
         <div className="filter-bar-section" style={{ flex: 1 }}>
           <div className="filter-label">Marca</div>
           <div className="filter-brands-wrap">
@@ -134,7 +132,7 @@ export default function FilterPanel({ products, onFilter }) {
         </div>
       )}
 
-      {/* Limpiar filtros */}
+      {/* Limpiar */}
       {hasActiveFilters && (
         <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '0.25rem' }}>
           <button className="btn-ghost btn-sm" onClick={clearFilters}>
@@ -146,8 +144,7 @@ export default function FilterPanel({ products, onFilter }) {
   );
 }
 
-// ── Utilidades ──
-
+// ── Extraer precio ──
 function extractPrice(product) {
   const raw = product.price_instructions?.unit_price
     || product.unit_price
@@ -155,15 +152,49 @@ function extractPrice(product) {
   return parseFloat(String(raw).replace(',', '.').replace('€', '').trim()) || 0;
 }
 
+// ── Extraer marca — intenta TODAS las formas posibles ──
 function extractBrand(product) {
-  // 1. Campo directo (viene de la API de categorías de Mercadona)
-  if (product.brand && typeof product.brand === 'string' && product.brand.trim()) {
+  // 1. brand como string directo
+  if (typeof product.brand === 'string' && product.brand.trim()) {
     return product.brand.trim();
   }
-  // 2. Dentro de details (viene del detalle de producto)
+
+  // 2. brand como objeto con .name (algunas APIs lo devuelven así)
+  if (product.brand && typeof product.brand === 'object' && product.brand.name) {
+    return String(product.brand.name).trim();
+  }
+
+  // 3. Dentro de details
   if (product.details?.brand && typeof product.details.brand === 'string') {
     return product.details.brand.trim();
   }
-  // 3. No hay marca conocida — retornar null (no forzar "Hacendado")
+
+  // 4. Campo badge o packaging que a veces contiene la marca
+  if (typeof product.badge === 'string' && product.badge.trim()) {
+    return product.badge.trim();
+  }
+
+  // 5. Extraer del display_name: marcas comunes de Mercadona al final del nombre
+  const knownBrands = [
+    'Hacendado', 'Bosque Verde', 'Deliplus', 'Compy', 'Dulciora',
+    'Al Punto', 'Fresón de Palos', 'Casa Tarradellas', 'El Pozo',
+    'Gallo', 'Nestlé', 'Danone', 'Bimbo', 'Kellogg', 'Cola Cao',
+    'Nocilla', 'Phoskitos', 'Don Simón', 'Pascual', 'Puleva',
+    'Central Lechera Asturiana', 'García Baquero', 'President',
+    'Campofrío', 'Oscar Mayer', 'Dia', 'Chanquete', 'Lay\'s',
+  ];
+
+  const name = product.display_name || '';
+  for (const b of knownBrands) {
+    // Buscar la marca al final del nombre (patrón habitual de Mercadona)
+    if (name.toLowerCase().endsWith(b.toLowerCase())) {
+      return b;
+    }
+    // O al principio
+    if (name.toLowerCase().startsWith(b.toLowerCase())) {
+      return b;
+    }
+  }
+
   return null;
 }
