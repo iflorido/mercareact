@@ -11,13 +11,16 @@ COPY . .
 RUN npm run build
 
 # ════════════════════════════════════════════════════════════
-# STAGE 2: Serve — Nginx sirve los estáticos
+# STAGE 2: Serve — Servidor estático ligero (sin Nginx)
 # ════════════════════════════════════════════════════════════
-FROM nginx:stable-alpine
+FROM node:20-alpine
 
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN npm install -g serve
+
+COPY --from=build /app/dist /app/dist
 
 EXPOSE 8099
 
-CMD ["nginx", "-g", "daemon off;"]
+# serve -s = modo SPA (redirige todas las rutas a index.html)
+# -l 8099 = escucha en puerto 8099
+CMD ["serve", "-s", "/app/dist", "-l", "8099"]
