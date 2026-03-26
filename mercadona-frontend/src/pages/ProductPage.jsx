@@ -80,7 +80,7 @@ export default function ProductPage() {
           <i className="bi bi-arrow-left"></i> Volver
         </a>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2.5rem', alignItems: 'start' }}>
+        <div className="detail-grid">
           <div className="detail-image-box">
             {product.photos?.length > 0 ? (
               <img src={product.photos[0].regular} alt={product.display_name} />

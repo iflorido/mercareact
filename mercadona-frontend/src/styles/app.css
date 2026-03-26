@@ -648,6 +648,20 @@ img { max-width: 100%; display: block; }
 /* ═══════════════════════════════════════════════════════════════
    PRODUCT DETAIL (ProductPage)
    ═══════════════════════════════════════════════════════════════ */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
 .detail-image-box {
   background: var(--bg-2);
   border: 1px solid var(--border);
