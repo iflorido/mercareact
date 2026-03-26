@@ -8,16 +8,21 @@ export default function ProductCard({ product, categoryId }) {
 
   const priceStr = product.price_instructions?.unit_price
     || product.unit_price || '0';
+  const priceFloat = parseFloat(String(priceStr).replace(',', '.').replace('€', '').trim()) || 0;
 
   const productUrl = `/products/${product.id}-${slugify(product.display_name)}`;
-
-  // Pasamos categoryId vía state para que ProductPage pueda mostrar relacionados
   const linkState = categoryId ? { categoryId } : undefined;
 
   async function handleAdd(e) {
     e.preventDefault();
     e.stopPropagation();
-    await addItem(product.id, 1);
+    // Pasar datos del producto para que el carrito tenga la info para mostrar
+    await addItem(product.id, 1, {
+      display_name: product.display_name,
+      price: priceFloat,
+      unit_price: priceStr,
+      thumbnail: product.thumbnail,
+    });
   }
 
   return (
