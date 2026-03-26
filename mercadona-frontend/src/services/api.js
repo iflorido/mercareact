@@ -5,7 +5,6 @@ const API_BASE = 'https://mercaapi.automaworks.es';
 
 const api = axios.create({
   baseURL: API_BASE,
-
 });
 
 // ---- CATEGORÍAS ----
