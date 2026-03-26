@@ -5,7 +5,8 @@ export default function Footer() {
       <div className="container-app">
         <div className="footer-inner">
           <div className="footer-text">
-            <strong>Ignacio Florido</strong> — React + FastAPI + SQLite
+            <strong>Ignacio Florido</strong> — React + FastAPI + SQLite <br />Proyecto de demostración técnica React desarrollado por Ignacio Florido. No es una tienda real y no se procesan pedidos reales.<br />
+            Servidor FastAPI en mercaapi.automaworks.es
           </div>
           <div className="footer-links">
             <a href="https://cv.iflorido.es" target="_blank" rel="noreferrer" className="footer-link">
