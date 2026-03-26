@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { getProductDetail } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { trackViewItem, trackAddToCart } from '../services/analytics';
 import SearchBar from '../components/SearchBar';
 import ProductSlider from '../components/ProductSlider';
 
@@ -27,7 +28,11 @@ export default function ProductPage() {
     setError(null);
     setQuantity(1);
     getProductDetail(productId)
-      .then(data => setProduct(data))
+      .then(data => {
+        setProduct(data);
+        // ★ Analytics: view_item
+        trackViewItem(data);
+      })
       .catch(() => setError('Producto no encontrado'))
       .finally(() => setLoading(false));
   }, [productId]);
@@ -40,13 +45,15 @@ export default function ProductPage() {
           .replace(',', '.').replace('€', '').trim()
       ) || 0;
 
-      // Pasar datos completos del producto al carrito
       await addItem(product.id, quantity, {
         display_name: product.display_name,
         price: priceFloat,
         unit_price: product.price_instructions?.unit_price || '',
         thumbnail: product.thumbnail || product.photos?.[0]?.regular || '',
       });
+
+      // ★ Analytics: add_to_cart
+      trackAddToCart(product, quantity);
 
       setToastMsg(`${quantity} unidad(es) añadida(s)`);
       setShowToast(true);
@@ -161,9 +168,7 @@ export default function ProductPage() {
 
         <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
           <h4 style={{ color: 'var(--text-2)', fontSize: '1rem', marginBottom: '1rem' }}>¿Buscas algo más?</h4>
-          <div style={{ maxWidth: '500px', margin: '0 auto' }}>
-            <SearchBar />
-          </div>
+          <div style={{ maxWidth: '500px', margin: '0 auto' }}><SearchBar /></div>
         </div>
 
         {categoryId && <ProductSlider productId={productId} categoryId={categoryId} />}

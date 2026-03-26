@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { trackBeginCheckout } from '../services/analytics';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -29,6 +30,13 @@ export default function CheckoutPage() {
     }
   }, [cartItems, navigate]);
 
+  // ★ Analytics: begin_checkout al cargar la página
+  useEffect(() => {
+    if (cartItems && cartItems.length > 0) {
+      trackBeginCheckout(cartItems, cartTotal);
+    }
+  }, []); // Solo al montar
+
   function handleChange(e) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   }
@@ -51,7 +59,7 @@ export default function CheckoutPage() {
       items: cartItems.map(item => ({ id: item.id, name: item.name || item.display_name, price: item.price, quantity: item.quantity })),
       subtotal: cartTotal, shipping: shippingCost, total: grandTotal,
     };
-    await clearAllItems();
+    clearAllItems();
     navigate('/success', { state: orderData, replace: true });
   }
 
@@ -65,9 +73,8 @@ export default function CheckoutPage() {
 
   if (!isProcessing.current && (!cartItems || cartItems.length === 0)) return null;
 
-  // Campo reutilizable
-  const Field = ({ id, name, label, type = 'text', placeholder, required = true, colClass = '' }) => (
-    <div className={colClass}>
+  const Field = ({ id, name, label, type = 'text', placeholder, required = true }) => (
+    <div>
       <label htmlFor={id} style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)', marginBottom: '0.35rem' }}>{label}</label>
       {type === 'textarea' ? (
         <textarea id={id} name={name} placeholder={placeholder} rows="4" value={form[name]} onChange={handleChange} required={required}
@@ -87,14 +94,11 @@ export default function CheckoutPage() {
   return (
     <>
       <div className="container-app" style={{ padding: '1.5rem 1.25rem 3rem' }}>
-        {/* Back */}
         <Link to="/carrito" style={{ color: 'var(--accent)', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: '1.5rem' }}>
           <i className="bi bi-arrow-left"></i> Volver al Carrito
         </Link>
 
         <div className="checkout-grid">
-
-          {/* ── Formulario ── */}
           <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem' }}>
             <h2 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>Dirección de envío</h2>
 
@@ -117,7 +121,7 @@ export default function CheckoutPage() {
                 <Field id="shipping" name="shipping" label="Método de Envío" type="select" placeholder={<><option value="standard">Estándar (3-5 días) — Gratis</option><option value="express">Exprés (1-2 días) — 5.00€</option></>} />
               </div>
 
-              <div style={{ gridColumn: '1 / -1', marginTop: '0.75rem' }}>
+              <div style={{ marginTop: '0.75rem' }}>
                 <Field id="notas" name="notas" label="Notas de envío" type="textarea" placeholder="Indique notas para su envío" required={false} />
               </div>
 
@@ -147,7 +151,6 @@ export default function CheckoutPage() {
             </form>
           </div>
 
-          {/* ── Resumen ── */}
           <div className="total-panel">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.05rem', margin: 0 }}>Resumen</h3>
@@ -168,8 +171,7 @@ export default function CheckoutPage() {
 
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem', fontSize: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-2)', marginBottom: '0.3rem' }}>
-                <span>Envío</span>
-                <span>{shippingCost.toFixed(2)}€</span>
+                <span>Envío</span><span>{shippingCost.toFixed(2)}€</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--border)', marginTop: '0.5rem' }}>
                 <span style={{ fontWeight: 700, fontSize: '1rem' }}>Total</span>
@@ -180,13 +182,11 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* ── Modal pasarela de pago ── */}
       {showModal && (
         <>
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(4px)', zIndex: 1050 }} />
           <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1060 }}>
             <div style={{ background: 'var(--bg-2)', borderRadius: 'var(--radius)', padding: '2rem 2.5rem', maxWidth: '400px', width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)' }}>
-
               <div style={{ marginBottom: '1.5rem' }}>
                 {!paymentDone ? (
                   <div style={{ width: '48px', height: '48px', border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
@@ -194,15 +194,12 @@ export default function CheckoutPage() {
                   <i className="bi bi-check-circle-fill" style={{ fontSize: '3.5rem', color: 'var(--success)' }}></i>
                 )}
               </div>
-
               <h4 style={{ fontSize: '1rem', color: 'var(--text-2)', marginBottom: '0.75rem', fontWeight: 500 }}>Pasarela de Pago Segura</h4>
-
               <div style={{ minHeight: '28px' }}>
                 <div key={currentStep} style={{ fontSize: '0.95rem', fontWeight: currentStep === 5 ? 700 : 400, color: currentStep === 5 ? 'var(--success)' : 'var(--text)', animation: 'fadeIn 0.4s' }}>
                   {stepMessages[currentStep]}
                 </div>
               </div>
-
               <div style={{ marginTop: '1.5rem', height: '4px', background: 'var(--surface-3)', borderRadius: '2px', overflow: 'hidden' }}>
                 <div style={{ height: '100%', background: 'var(--accent)', borderRadius: '2px', width: `${progress}%`, transition: 'width 0.5s ease' }} />
               </div>

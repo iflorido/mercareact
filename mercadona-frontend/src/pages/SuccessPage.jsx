@@ -1,6 +1,7 @@
 // src/pages/SuccessPage.jsx
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { trackPurchase } from '../services/analytics';
 
 export default function SuccessPage() {
   const location = useLocation();
@@ -13,7 +14,18 @@ export default function SuccessPage() {
   });
 
   useEffect(() => {
-    if (!orderData) navigate('/', { replace: true });
+    if (!orderData) {
+      navigate('/', { replace: true });
+      return;
+    }
+
+    // ★ Analytics: purchase
+    trackPurchase(
+      orderData.transaction_id,
+      orderData.items,
+      orderData.total,
+      orderData.shipping
+    );
   }, [orderData, navigate]);
 
   if (!orderData) return null;
@@ -22,8 +34,6 @@ export default function SuccessPage() {
 
   return (
     <div className="container-app" style={{ padding: '3rem 1.25rem', textAlign: 'center' }}>
-
-      {/* Icono animado */}
       <div style={{ marginBottom: '1.5rem' }}>
         <i className="bi bi-check-circle-fill success-icon"></i>
       </div>
@@ -35,7 +45,6 @@ export default function SuccessPage() {
         Tu pedido simulado ha sido procesado correctamente.
       </p>
 
-      {/* ── Ticket ── */}
       <div id="ticket-invoice" className="ticket-card">
         <div className="ticket-header">
           <i className="bi bi-receipt" style={{ marginRight: '0.5rem' }}></i>
@@ -43,24 +52,13 @@ export default function SuccessPage() {
         </div>
 
         <div style={{ padding: '1.25rem' }}>
-          {/* Fecha */}
           <div style={{ textAlign: 'right', fontSize: '0.78rem', color: 'var(--text-3)', marginBottom: '1rem' }}>
             {currentDate}
           </div>
 
-          {/* Productos */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {items.map((item, i) => (
-              <div
-                key={item.id || i}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.75rem 0',
-                  borderBottom: '1px solid var(--border)',
-                }}
-              >
+              <div key={item.id || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{item.name}</div>
                   <div style={{ fontSize: '0.76rem', color: 'var(--text-3)' }}>Cantidad: {item.quantity}</div>
@@ -69,13 +67,11 @@ export default function SuccessPage() {
               </div>
             ))}
 
-            {/* Envío */}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', fontSize: '0.88rem', color: 'var(--text-2)', borderBottom: '1px solid var(--border)' }}>
               <span>Envío</span>
               <span>{shipping.toFixed(2)}€</span>
             </div>
 
-            {/* Total */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0 0.5rem' }}>
               <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>TOTAL</span>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.4rem', color: 'var(--accent)' }}>{total.toFixed(2)}€</span>
@@ -88,7 +84,6 @@ export default function SuccessPage() {
         </div>
       </div>
 
-      {/* ── Acciones ── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '2rem' }}>
         <button onClick={() => window.print()} className="btn-ghost" style={{ padding: '0.7rem 1.5rem' }}>
           <i className="bi bi-file-earmark-pdf"></i> Imprimir Ticket (PDF)

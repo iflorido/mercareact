@@ -1,6 +1,7 @@
 // src/components/ProductCard.jsx
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { trackAddToCart } from '../services/analytics';
 import { slugify } from '../utils';
 
 export default function ProductCard({ product, categoryId }) {
@@ -16,13 +17,15 @@ export default function ProductCard({ product, categoryId }) {
   async function handleAdd(e) {
     e.preventDefault();
     e.stopPropagation();
-    // Pasar datos del producto para que el carrito tenga la info para mostrar
     await addItem(product.id, 1, {
       display_name: product.display_name,
       price: priceFloat,
       unit_price: priceStr,
       thumbnail: product.thumbnail,
     });
+
+    // ★ Analytics: add_to_cart
+    trackAddToCart(product, 1);
   }
 
   return (
