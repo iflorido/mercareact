@@ -1,7 +1,4 @@
 // src/pages/CartPage.jsx
-// Equivale a: carrito.html
-// Funcionalidad: ver carrito, actualizar cantidades, eliminar productos, ir a checkout
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -10,200 +7,190 @@ import { slugify } from '../utils';
 export default function CartPage() {
   const { cartItems, cartTotal, updateItem, removeItem } = useCart();
 
-  // Estado local para manejar las cantidades editables de cada producto.
-  // Se inicializa con las cantidades actuales del carrito.
-  // Usamos un objeto { productId: cantidad } para no perder el valor del input
-  // mientras el usuario escribe antes de pulsar "actualizar".
   const [quantities, setQuantities] = useState(() => {
     const initial = {};
-    cartItems.forEach(item => {
-      initial[item.id] = item.quantity;
-    });
+    cartItems.forEach(item => { initial[item.id] = item.quantity; });
     return initial;
   });
 
-  // Se dispara cuando el usuario cambia el número en el input
   function handleQuantityChange(productId, value) {
     setQuantities(prev => ({ ...prev, [productId]: value }));
   }
 
-  // Se dispara al pulsar el botón de actualizar (icono de reload)
   async function handleUpdate(productId) {
     const newQty = parseInt(quantities[productId]) || 1;
     await updateItem(productId, newQty);
   }
 
-  // Se dispara al pulsar el botón de eliminar (icono de papelera)
   async function handleDelete(productId) {
     await removeItem(productId);
   }
 
-  // ---------- CARRITO VACÍO ----------
+  // ── Carrito vacío ──
   if (!cartItems || cartItems.length === 0) {
     return (
-      <div className="container mb-5">
-        <div className="text-center py-5">
-          <div className="mb-3">
-            <i className="bi bi-cart-x text-muted" style={{ fontSize: '5rem' }}></i>
-          </div>
-          <h3>Tu carrito está vacío</h3>
-          <p className="text-muted">Parece que aún no has añadido productos.</p>
-          <Link to="/" className="btn btn-success mt-3 px-4">Ir a la tienda</Link>
-        </div>
+      <div className="container-app" style={{ textAlign: 'center', padding: '5rem 1.25rem' }}>
+        <i className="bi bi-bag-x" style={{ fontSize: '4rem', color: 'var(--text-3)', display: 'block', marginBottom: '1rem' }}></i>
+        <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>Tu carrito está vacío</h2>
+        <p style={{ color: 'var(--text-2)', marginBottom: '1.5rem' }}>Parece que aún no has añadido productos.</p>
+        <Link to="/" className="btn-accent" style={{ padding: '0.7rem 2rem' }}>Ir a la tienda</Link>
       </div>
     );
   }
 
-  // ---------- CARRITO CON PRODUCTOS ----------
+  // ── Carrito con productos ──
   return (
-    <div className="container mb-5">
-      <div className="row g-4">
+    <div className="container-app" style={{ padding: '1.5rem 1.25rem 3rem' }}>
+      <h1 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Tu carrito</h1>
 
-        {/* ===== COLUMNA IZQUIERDA: TABLA DE PRODUCTOS ===== */}
-        <div className="col-lg-8">
-          <div className="card shadow-sm border-0">
-            <div className="card-body p-0">
-              <div className="table-responsive">
-                <table className="table table-hover align-middle mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th className="ps-4">Producto</th>
-                      <th>Precio</th>
-                      <th>Cantidad</th>
-                      <th>Total</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cartItems.map(item => {
-                      // Calcular subtotal de esta línea
-                      const subtotal = (item.price * item.quantity).toFixed(2);
+      <div className="cart-grid">
 
-                      return (
-                        <tr key={item.id}>
-                          {/* Producto: imagen + nombre con enlace */}
-                          <td className="ps-4">
-                            <div className="d-flex align-items-center">
-                              <Link to={`/products/${item.id}-${slugify(item.display_name)}`}>
-                                <img
-                                  src={item.thumbnail}
-                                  alt={item.display_name}
-                                  className="me-3"
-                                  style={{
-                                    width: '70px',
-                                    height: '70px',
-                                    objectFit: 'contain',
-                                    border: '1px solid #dee2e6',
-                                    borderRadius: '6px',
-                                    background: 'white',
-                                    padding: '5px',
-                                  }}
-                                />
-                              </Link>
-                              <div style={{ maxWidth: '250px' }}>
-                                <Link
-                                  to={`/products/${item.id}-${slugify(item.display_name)}`}
-                                  className="text-decoration-none fw-bold"
-                                  style={{ color: '#212529' }}
-                                >
-                                  {item.display_name}
-                                </Link>
-                              </div>
-                            </div>
-                          </td>
+        {/* ── Lista de productos ── */}
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+          {cartItems.map((item, idx) => {
+            const subtotal = (item.price * item.quantity).toFixed(2);
 
-                          {/* Precio unitario */}
-                          <td className="text-muted small">{item.unit_price}</td>
+            return (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1rem 1.25rem',
+                  borderBottom: idx < cartItems.length - 1 ? '1px solid var(--border)' : 'none',
+                }}
+              >
+                {/* Imagen */}
+                <Link to={`/products/${item.id}-${slugify(item.display_name)}`}>
+                  <img
+                    src={item.thumbnail}
+                    alt={item.display_name}
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      objectFit: 'contain',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-xs)',
+                      background: 'var(--bg)',
+                      padding: '4px',
+                      flexShrink: 0,
+                    }}
+                  />
+                </Link>
 
-                          {/* Cantidad: input + botón actualizar */}
-                          <td>
-                            <div className="d-flex align-items-center gap-2">
-                              <input
-                                type="number"
-                                min="1"
-                                max="50"
-                                className="form-control form-control-sm text-center"
-                                style={{ width: '60px' }}
-                                value={quantities[item.id] ?? item.quantity}
-                                onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                              />
-                              <button
-                                className="btn btn-sm btn-link text-primary p-0"
-                                title="Actualizar cantidad"
-                                onClick={() => handleUpdate(item.id)}
-                              >
-                                <i className="bi bi-arrow-clockwise fs-5"></i>
-                              </button>
-                            </div>
-                          </td>
+                {/* Nombre + precio unitario */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Link
+                    to={`/products/${item.id}-${slugify(item.display_name)}`}
+                    style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text)', display: 'block', marginBottom: '0.15rem' }}
+                  >
+                    {item.display_name}
+                  </Link>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-2)' }}>{item.unit_price}</span>
+                </div>
 
-                          {/* Subtotal de la línea */}
-                          <td className="fw-bold text-success">{subtotal} €</td>
+                {/* Cantidad */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={quantities[item.id] ?? item.quantity}
+                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                    style={{
+                      width: '56px',
+                      padding: '0.4rem',
+                      border: '1px solid var(--border-2)',
+                      borderRadius: 'var(--radius-xs)',
+                      textAlign: 'center',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.85rem',
+                      background: 'var(--bg)',
+                    }}
+                  />
+                  <button
+                    onClick={() => handleUpdate(item.id)}
+                    title="Actualizar"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--accent)',
+                      fontSize: '1.1rem',
+                      padding: '0.2rem',
+                    }}
+                  >
+                    <i className="bi bi-arrow-clockwise"></i>
+                  </button>
+                </div>
 
-                          {/* Botón eliminar */}
-                          <td>
-                            <button
-                              className="btn btn-sm btn-outline-danger border-0"
-                              title="Eliminar"
-                              onClick={() => handleDelete(item.id)}
-                            >
-                              <i className="bi bi-trash"></i>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                {/* Subtotal */}
+                <span style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  color: 'var(--price)',
+                  minWidth: '70px',
+                  textAlign: 'right',
+                }}>
+                  {subtotal} €
+                </span>
+
+                {/* Eliminar */}
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  title="Eliminar"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-3)',
+                    fontSize: '1rem',
+                    padding: '0.3rem',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={e => e.target.style.color = 'var(--price)'}
+                  onMouseLeave={e => e.target.style.color = 'var(--text-3)'}
+                >
+                  <i className="bi bi-trash3"></i>
+                </button>
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
 
-        {/* ===== COLUMNA DERECHA: RESUMEN DEL PEDIDO ===== */}
-        <div className="col-lg-4">
-          <div
-            className="shadow-sm"
-            style={{
-              background: 'white',
-              padding: '25px',
-              borderRadius: '12px',
-              border: '1px solid #e9ecef',
-            }}
-          >
-            <h4 className="mb-3">Resumen del pedido</h4>
+        {/* ── Resumen ── */}
+        <div className="total-panel">
+          <h3 style={{ fontSize: '1.05rem', marginBottom: '1.25rem' }}>Resumen del pedido</h3>
 
-            <div className="d-flex justify-content-between mb-2 text-muted">
-              <span>Subtotal</span>
-              <span>{cartTotal.toFixed(2)} €</span>
-            </div>
-            <div className="d-flex justify-content-between mb-4 text-muted">
-              <span>Envío estimado</span>
-              <span className="text-success fw-bold">GRATIS</span>
-            </div>
-
-            <hr />
-
-            <div className="d-flex justify-content-between mb-4 align-items-center">
-              <span className="fw-bold fs-5">Total a pagar</span>
-              <span className="fw-bold text-success fs-3">{cartTotal.toFixed(2)} €</span>
-            </div>
-
-            <div className="d-grid gap-2">
-              <Link to="/checkout" className="btn btn-success btn-lg shadow-sm">
-                Finalizar Compra <i className="bi bi-chevron-right"></i>
-              </Link>
-              <Link to="/" className="btn btn-outline-secondary">
-                Seguir comprando
-              </Link>
-            </div>
-
-            <div className="mt-3 text-center small text-muted">
-              <i className="bi bi-shield-lock"></i> Pago 100% Seguro (Simulado)
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.88rem', color: 'var(--text-2)' }}>
+            <span>Subtotal</span>
+            <span>{cartTotal.toFixed(2)} €</span>
           </div>
-        </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', fontSize: '0.88rem', color: 'var(--text-2)' }}>
+            <span>Envío estimado</span>
+            <span style={{ color: 'var(--success)', fontWeight: 600 }}>GRATIS</span>
+          </div>
 
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <span style={{ fontWeight: 600, fontSize: '1rem' }}>Total</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--price)' }}>{cartTotal.toFixed(2)} €</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <Link to="/checkout" className="btn-accent" style={{ padding: '0.75rem', fontSize: '0.95rem', textAlign: 'center' }}>
+              Finalizar Compra <i className="bi bi-chevron-right"></i>
+            </Link>
+            <Link to="/" className="btn-ghost" style={{ textAlign: 'center' }}>
+              Seguir comprando
+            </Link>
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--text-3)', marginTop: '1rem' }}>
+            <i className="bi bi-shield-lock" style={{ marginRight: '0.3rem' }}></i> Pago 100% Seguro (Simulado)
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,4 @@
 // src/pages/CheckoutPage.jsx
-// Equivale a: checkout.html
-
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -9,23 +7,12 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems, cartTotal, clearAllItems } = useCart();
   const formRef = useRef(null);
-
-  // Flag para evitar redirección cuando vaciamos el carrito al finalizar
   const isProcessing = useRef(false);
 
   const [form, setForm] = useState({
-    first_name: 'Ignacio',
-    last_name: 'Florido',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zip: '',
-    country: 'ES',
-    shipping: 'standard',
-    paymentMethod: 'credit',
-    notas: '',
+    first_name: 'Ignacio', last_name: 'Florido',
+    email: '', phone: '', address: '', city: '', state: '', zip: '',
+    country: 'ES', shipping: 'standard', paymentMethod: 'credit', notas: '',
   });
 
   const [showModal, setShowModal] = useState(false);
@@ -36,7 +23,6 @@ export default function CheckoutPage() {
   const shippingCost = form.shipping === 'express' ? 5.0 : 0.0;
   const grandTotal = cartTotal + shippingCost;
 
-  // Si el carrito está vacío Y NO estamos procesando → redirigir al inicio
   useEffect(() => {
     if (!isProcessing.current && (!cartItems || cartItems.length === 0)) {
       navigate('/', { replace: true });
@@ -44,61 +30,28 @@ export default function CheckoutPage() {
   }, [cartItems, navigate]);
 
   function handleChange(e) {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
   function handlePay(e) {
     e.preventDefault();
-    const formEl = formRef.current;
-    if (!formEl.checkValidity()) {
-      formEl.reportValidity();
-      return;
-    }
-    startPaymentProcess();
-  }
-
-  function startPaymentProcess() {
+    if (!formRef.current.checkValidity()) { formRef.current.reportValidity(); return; }
     isProcessing.current = true;
-    setShowModal(true);
-    setCurrentStep(1);
-    setProgress(10);
-    setPaymentDone(false);
-
+    setShowModal(true); setCurrentStep(1); setProgress(10); setPaymentDone(false);
     setTimeout(() => { setCurrentStep(2); setProgress(40); }, 1500);
     setTimeout(() => { setCurrentStep(3); setProgress(70); }, 3000);
     setTimeout(() => { setCurrentStep(4); setProgress(90); }, 4500);
-
-    setTimeout(() => {
-      setCurrentStep(5);
-      setProgress(100);
-      setPaymentDone(true);
-      setTimeout(() => finishOrder(), 1000);
-    }, 6000);
+    setTimeout(() => { setCurrentStep(5); setProgress(100); setPaymentDone(true); setTimeout(finishOrder, 1000); }, 6000);
   }
 
   async function finishOrder() {
     const transactionId = crypto.randomUUID().split('-')[0].toUpperCase();
-
-    // Guardar datos ANTES de vaciar el carrito
     const orderData = {
       transaction_id: transactionId,
-      items: cartItems.map(item => ({
-        id: item.id,
-        name: item.name || item.display_name,
-        price: item.price,
-        quantity: item.quantity,
-      })),
-      subtotal: cartTotal,
-      shipping: shippingCost,
-      total: grandTotal,
+      items: cartItems.map(item => ({ id: item.id, name: item.name || item.display_name, price: item.price, quantity: item.quantity })),
+      subtotal: cartTotal, shipping: shippingCost, total: grandTotal,
     };
-
-    // ★ Vaciar carrito del SERVIDOR y del estado local
-    //   clearAllItems() intenta /cart/clear, si falla elimina uno a uno
     await clearAllItems();
-
-    // Navegar a success con los datos del pedido
     navigate('/success', { state: orderData, replace: true });
   }
 
@@ -112,157 +65,153 @@ export default function CheckoutPage() {
 
   if (!isProcessing.current && (!cartItems || cartItems.length === 0)) return null;
 
+  // Campo reutilizable
+  const Field = ({ id, name, label, type = 'text', placeholder, required = true, colClass = '' }) => (
+    <div className={colClass}>
+      <label htmlFor={id} style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)', marginBottom: '0.35rem' }}>{label}</label>
+      {type === 'textarea' ? (
+        <textarea id={id} name={name} placeholder={placeholder} rows="4" value={form[name]} onChange={handleChange} required={required}
+          style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', resize: 'vertical', outline: 'none' }} />
+      ) : type === 'select' ? (
+        <select id={id} name={name} value={form[name]} onChange={handleChange} required={required}
+          style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }}>
+          {placeholder}
+        </select>
+      ) : (
+        <input type={type} id={id} name={name} placeholder={placeholder} value={form[name]} onChange={handleChange} required={required}
+          style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }} />
+      )}
+    </div>
+  );
+
   return (
     <>
-      <nav className="navbar navbar-light bg-light mb-4 shadow-sm">
-        <div className="container">
-          <Link className="navbar-brand fw-bold text-success" to="/carrito">
-            <i className="bi bi-arrow-left"></i> Volver al Carrito
-          </Link>
-          <span className="navbar-text fw-bold">🛒 Finalizar Compra</span>
-        </div>
-      </nav>
+      <div className="container-app" style={{ padding: '1.5rem 1.25rem 3rem' }}>
+        {/* Back */}
+        <Link to="/carrito" style={{ color: 'var(--accent)', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: '1.5rem' }}>
+          <i className="bi bi-arrow-left"></i> Volver al Carrito
+        </Link>
 
-      <div className="container py-4">
-        <div className="row g-5">
-          <div className="col-md-8">
-            <h4 className="mb-3 text-success">Dirección de envío</h4>
+        <div className="checkout-grid">
 
-            <div className="alert alert-warning small d-flex align-items-center">
-              <i className="bi bi-info-circle-fill me-2"></i>
-              <div><strong>Simulación:</strong> No uses datos reales. Proyecto Demo.</div>
+          {/* ── Formulario ── */}
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>Dirección de envío</h2>
+
+            <div style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)', borderRadius: 'var(--radius-xs)', padding: '0.7rem 1rem', fontSize: '0.82rem', color: '#92400e', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <i className="bi bi-info-circle-fill"></i>
+              <span><strong>Simulación:</strong> No uses datos reales. Proyecto Demo.</span>
             </div>
 
             <form ref={formRef} noValidate onSubmit={handlePay}>
-              <div className="row g-3">
-                <div className="col-sm-6">
-                  <label htmlFor="firstName" className="form-label" style={{ color: '#198754' }}>Nombre</label>
-                  <input type="text" className="form-control" id="firstName" name="first_name" value={form.first_name} onChange={handleChange} required />
-                </div>
-                <div className="col-sm-6">
-                  <label htmlFor="lastName" className="form-label" style={{ color: '#198754' }}>Apellidos</label>
-                  <input type="text" className="form-control" id="lastName" name="last_name" value={form.last_name} onChange={handleChange} required />
-                </div>
-                <div className="col-sm-6">
-                  <label htmlFor="email" className="form-label" style={{ color: '#198754' }}>Correo Electrónico</label>
-                  <input type="email" className="form-control" id="email" name="email" placeholder="ejemplo@dominio.com" value={form.email} onChange={handleChange} required />
-                </div>
-                <div className="col-sm-6">
-                  <label htmlFor="phone" className="form-label" style={{ color: '#198754' }}>Teléfono</label>
-                  <input type="tel" className="form-control" id="phone" name="phone" placeholder="+34 600 000 000" value={form.phone} onChange={handleChange} required />
-                </div>
-                <div className="col-6">
-                  <label htmlFor="address" className="form-label" style={{ color: '#198754' }}>Dirección</label>
-                  <input type="text" className="form-control" id="address" name="address" placeholder="Calle Falsa 123" value={form.address} onChange={handleChange} required />
-                </div>
-                <div className="col-md-6">
-                  <label htmlFor="city" className="form-label" style={{ color: '#198754' }}>Ciudad</label>
-                  <input type="text" className="form-control" id="city" name="city" placeholder="Ciudad" value={form.city} onChange={handleChange} required />
-                </div>
-                <div className="col-md-4">
-                  <label htmlFor="state" className="form-label" style={{ color: '#198754' }}>Provincia</label>
-                  <input type="text" className="form-control" id="state" name="state" placeholder="Provincia" value={form.state} onChange={handleChange} required />
-                </div>
-                <div className="col-md-4">
-                  <label htmlFor="zip" className="form-label" style={{ color: '#198754' }}>Código Postal</label>
-                  <input type="text" className="form-control" id="zip" name="zip" placeholder="00000" value={form.zip} onChange={handleChange} required />
-                </div>
-                <div className="col-md-4">
-                  <label htmlFor="country" className="form-label" style={{ color: '#198754' }}>País</label>
-                  <select className="form-select" id="country" name="country" value={form.country} onChange={handleChange} required>
-                    <option value="ES">España</option>
-                  </select>
-                </div>
-                <div className="col-md-12">
-                  <label htmlFor="shipping" className="form-label" style={{ color: '#198754' }}>Método de Envío</label>
-                  <select className="form-select" id="shipping" name="shipping" value={form.shipping} onChange={handleChange} required>
-                    <option value="standard">Envío Estándar (3-5 días) - Gratis</option>
-                    <option value="express">Envío Exprés (1-2 días) - 5.00€</option>
-                  </select>
-                </div>
-                <div className="col-12">
-                  <label htmlFor="notas" className="form-label" style={{ color: '#198754' }}>Notas de envío</label>
-                  <textarea className="form-control" id="notas" name="notas" placeholder="Indique notas para su envío" rows="5" value={form.notas} onChange={handleChange} />
+              <div className="checkout-form-grid">
+                <Field id="firstName" name="first_name" label="Nombre" />
+                <Field id="lastName" name="last_name" label="Apellidos" />
+                <Field id="email" name="email" label="Correo Electrónico" type="email" placeholder="ejemplo@dominio.com" />
+                <Field id="phone" name="phone" label="Teléfono" type="tel" placeholder="+34 600 000 000" />
+                <Field id="address" name="address" label="Dirección" placeholder="Calle Falsa 123" />
+                <Field id="city" name="city" label="Ciudad" placeholder="Ciudad" />
+                <Field id="state" name="state" label="Provincia" placeholder="Provincia" />
+                <Field id="zip" name="zip" label="Código Postal" placeholder="00000" />
+                <Field id="country" name="country" label="País" type="select" placeholder={<option value="ES">España</option>} />
+                <Field id="shipping" name="shipping" label="Método de Envío" type="select" placeholder={<><option value="standard">Estándar (3-5 días) — Gratis</option><option value="express">Exprés (1-2 días) — 5.00€</option></>} />
+              </div>
+
+              <div style={{ gridColumn: '1 / -1', marginTop: '0.75rem' }}>
+                <Field id="notas" name="notas" label="Notas de envío" type="textarea" placeholder="Indique notas para su envío" required={false} />
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
+                <p style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.75rem' }}>Método de pago</p>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {['credit', 'bizum'].map(method => (
+                    <label key={method} style={{
+                      flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem',
+                      border: `1px solid ${form.paymentMethod === method ? 'var(--accent)' : 'var(--border-2)'}`,
+                      borderRadius: 'var(--radius-xs)', cursor: 'pointer', transition: 'border-color 0.2s',
+                      background: form.paymentMethod === method ? 'var(--accent-dim)' : 'var(--bg)',
+                    }}>
+                      <input type="radio" name="paymentMethod" value={method} checked={form.paymentMethod === method} onChange={handleChange}
+                        style={{ accentColor: 'var(--accent)' }} />
+                      <span style={{ fontSize: '0.88rem', fontWeight: 500 }}>
+                        {method === 'credit' ? 'Tarjeta de Crédito' : 'Bizum'}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
-              <hr className="my-4" />
-
-              <h5 className="mb-3 text-success">Pago Seguro (Simulado)</h5>
-              <div className="my-3">
-                <div className="form-check">
-                  <input id="credit" name="paymentMethod" type="radio" className="form-check-input" value="credit" checked={form.paymentMethod === 'credit'} onChange={handleChange} />
-                  <label className="form-check-label" htmlFor="credit">Tarjeta de Crédito</label>
-                </div>
-                <div className="form-check">
-                  <input id="bizum" name="paymentMethod" type="radio" className="form-check-input" value="bizum" checked={form.paymentMethod === 'bizum'} onChange={handleChange} />
-                  <label className="form-check-label" htmlFor="bizum">Bizum</label>
-                </div>
-              </div>
-
-              <hr className="my-4" />
-
-              <button className="w-100 btn btn-success btn-lg py-3 fw-bold shadow-sm" type="submit">
-                PAGAR {grandTotal.toFixed(2)}€ <i className="bi bi-credit-card-2-front ms-2"></i>
+              <button type="submit" className="btn-accent btn-full" style={{ marginTop: '1.5rem', padding: '0.85rem', fontSize: '1rem' }}>
+                PAGAR {grandTotal.toFixed(2)}€ <i className="bi bi-credit-card-2-front" style={{ marginLeft: '0.4rem' }}></i>
               </button>
             </form>
           </div>
 
-          <div className="col-md-4 order-md-last">
-            <h4 className="d-flex justify-content-between align-items-center mb-3">
-              <span className="text-success">Resumen</span>
-              <span className="badge bg-success rounded-pill">{cartItems.length}</span>
-            </h4>
-            <ul className="list-group mb-3 shadow-sm">
+          {/* ── Resumen ── */}
+          <div className="total-panel">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.05rem', margin: 0 }}>Resumen</h3>
+              <span style={{ background: 'var(--accent)', color: 'white', fontSize: '0.72rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>{cartItems.length}</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
               {cartItems.map(item => (
-                <li key={item.id} className="list-group-item d-flex justify-content-between lh-sm">
-                  <div>
-                    <h6 className="my-0">{item.name || item.display_name}</h6>
-                    <small className="text-muted">Cant: {item.quantity}</small>
+                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name || item.display_name}</div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-3)' }}>Cant: {item.quantity}</div>
                   </div>
-                  <span className="text-muted">{(item.price * item.quantity).toFixed(2)}€</span>
-                </li>
+                  <span style={{ color: 'var(--text-2)', flexShrink: 0, marginLeft: '0.5rem' }}>{(item.price * item.quantity).toFixed(2)}€</span>
+                </div>
               ))}
-              <li className="list-group-item d-flex justify-content-between bg-light small">
-                <span className="text-muted">Gastos de envío</span>
-                <span className="text-muted">{shippingCost.toFixed(2)}€</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between bg-light">
-                <span className="fw-bold text-success">TOTAL</span>
-                <strong className="text-success">{grandTotal.toFixed(2)}€</strong>
-              </li>
-            </ul>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-2)', marginBottom: '0.3rem' }}>
+                <span>Envío</span>
+                <span>{shippingCost.toFixed(2)}€</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--border)', marginTop: '0.5rem' }}>
+                <span style={{ fontWeight: 700, fontSize: '1rem' }}>Total</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.35rem', color: 'var(--price)' }}>{grandTotal.toFixed(2)}€</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* ── Modal pasarela de pago ── */}
       {showModal && (
         <>
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} />
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1060 }}>
-            <div className="bg-white rounded shadow-lg text-center p-4" style={{ maxWidth: '400px', width: '90%' }}>
-              <div className="mb-4">
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(4px)', zIndex: 1050 }} />
+          <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1060 }}>
+            <div style={{ background: 'var(--bg-2)', borderRadius: 'var(--radius)', padding: '2rem 2.5rem', maxWidth: '400px', width: '90%', textAlign: 'center', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)' }}>
+
+              <div style={{ marginBottom: '1.5rem' }}>
                 {!paymentDone ? (
-                  <div className="spinner-border text-success" role="status" style={{ width: '3rem', height: '3rem' }}>
-                    <span className="visually-hidden">Cargando...</span>
-                  </div>
+                  <div style={{ width: '48px', height: '48px', border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
                 ) : (
-                  <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '4rem' }} />
+                  <i className="bi bi-check-circle-fill" style={{ fontSize: '3.5rem', color: 'var(--success)' }}></i>
                 )}
               </div>
-              <h4 className="mb-3 text-secondary">Pasarela de Pago Segura</h4>
-              <div style={{ minHeight: '30px' }}>
-                <div key={currentStep} className={`fs-5 ${currentStep === 5 ? 'fw-bold text-success' : ''}`} style={{ animation: 'fadeIn 0.5s' }}>
+
+              <h4 style={{ fontSize: '1rem', color: 'var(--text-2)', marginBottom: '0.75rem', fontWeight: 500 }}>Pasarela de Pago Segura</h4>
+
+              <div style={{ minHeight: '28px' }}>
+                <div key={currentStep} style={{ fontSize: '0.95rem', fontWeight: currentStep === 5 ? 700 : 400, color: currentStep === 5 ? 'var(--success)' : 'var(--text)', animation: 'fadeIn 0.4s' }}>
                   {stepMessages[currentStep]}
                 </div>
               </div>
-              <div className="mt-4 progress" style={{ height: '5px' }}>
-                <div className="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style={{ width: `${progress}%`, transition: 'width 0.5s ease' }} />
+
+              <div style={{ marginTop: '1.5rem', height: '4px', background: 'var(--surface-3)', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: 'var(--accent)', borderRadius: '2px', width: `${progress}%`, transition: 'width 0.5s ease' }} />
               </div>
             </div>
           </div>
         </>
       )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }
