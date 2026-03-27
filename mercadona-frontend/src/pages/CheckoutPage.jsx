@@ -4,6 +4,25 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { trackBeginCheckout } from '../services/analytics';
 
+// ✅ Componente Field movido FUERA para evitar redefinición en cada render
+const Field = ({ id, name, label, type = 'text', placeholder, required = true, value, onChange }) => (
+  <div>
+    <label htmlFor={id} style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)', marginBottom: '0.35rem' }}>{label}</label>
+    {type === 'textarea' ? (
+      <textarea id={id} name={name} placeholder={placeholder} rows="4" value={value} onChange={onChange} required={required}
+        style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', resize: 'vertical', outline: 'none' }} />
+    ) : type === 'select' ? (
+      <select id={id} name={name} value={value} onChange={onChange} required={required}
+        style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }}>
+        {placeholder}
+      </select>
+    ) : (
+      <input type={type} id={id} name={name} placeholder={placeholder} value={value} onChange={onChange} required={required}
+        style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }} />
+    )}
+  </div>
+);
+
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems, cartTotal, clearAllItems } = useCart();
@@ -73,24 +92,6 @@ export default function CheckoutPage() {
 
   if (!isProcessing.current && (!cartItems || cartItems.length === 0)) return null;
 
-  const Field = ({ id, name, label, type = 'text', placeholder, required = true }) => (
-    <div>
-      <label htmlFor={id} style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)', marginBottom: '0.35rem' }}>{label}</label>
-      {type === 'textarea' ? (
-        <textarea id={id} name={name} placeholder={placeholder} rows="4" value={form[name]} onChange={handleChange} required={required}
-          style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', resize: 'vertical', outline: 'none' }} />
-      ) : type === 'select' ? (
-        <select id={id} name={name} value={form[name]} onChange={handleChange} required={required}
-          style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }}>
-          {placeholder}
-        </select>
-      ) : (
-        <input type={type} id={id} name={name} placeholder={placeholder} value={form[name]} onChange={handleChange} required={required}
-          style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-body)', fontSize: '0.88rem', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }} />
-      )}
-    </div>
-  );
-
   return (
     <>
       <div className="container-app" style={{ padding: '1.5rem 1.25rem 3rem' }}>
@@ -109,20 +110,20 @@ export default function CheckoutPage() {
 
             <form ref={formRef} noValidate onSubmit={handlePay}>
               <div className="checkout-form-grid">
-                <Field id="firstName" name="first_name" label="Nombre" />
-                <Field id="lastName" name="last_name" label="Apellidos" />
-                <Field id="email" name="email" label="Correo Electrónico" type="email" placeholder="ejemplo@dominio.com" />
-                <Field id="phone" name="phone" label="Teléfono" type="tel" placeholder="+34 600 000 000" />
-                <Field id="address" name="address" label="Dirección" placeholder="Calle Falsa 123" />
-                <Field id="city" name="city" label="Ciudad" placeholder="Ciudad" />
-                <Field id="state" name="state" label="Provincia" placeholder="Provincia" />
-                <Field id="zip" name="zip" label="Código Postal" placeholder="00000" />
-                <Field id="country" name="country" label="País" type="select" placeholder={<option value="ES">España</option>} />
-                <Field id="shipping" name="shipping" label="Método de Envío" type="select" placeholder={<><option value="standard">Estándar (3-5 días) — Gratis</option><option value="express">Exprés (1-2 días) — 5.00€</option></>} />
+                <Field id="firstName" name="first_name" label="Nombre" value={form.first_name} onChange={handleChange} />
+                <Field id="lastName" name="last_name" label="Apellidos" value={form.last_name} onChange={handleChange} />
+                <Field id="email" name="email" label="Correo Electrónico" type="email" placeholder="ejemplo@dominio.com" value={form.email} onChange={handleChange} />
+                <Field id="phone" name="phone" label="Teléfono" type="tel" placeholder="+34 600 000 000" value={form.phone} onChange={handleChange} />
+                <Field id="address" name="address" label="Dirección" placeholder="Calle Falsa 123" value={form.address} onChange={handleChange} />
+                <Field id="city" name="city" label="Ciudad" placeholder="Ciudad" value={form.city} onChange={handleChange} />
+                <Field id="state" name="state" label="Provincia" placeholder="Provincia" value={form.state} onChange={handleChange} />
+                <Field id="zip" name="zip" label="Código Postal" placeholder="00000" value={form.zip} onChange={handleChange} />
+                <Field id="country" name="country" label="País" type="select" placeholder={<option value="ES">España</option>} value={form.country} onChange={handleChange} />
+                <Field id="shipping" name="shipping" label="Método de Envío" type="select" placeholder={<><option value="standard">Estándar (3-5 días) — Gratis</option><option value="express">Exprés (1-2 días) — 5.00€</option></>} value={form.shipping} onChange={handleChange} />
               </div>
 
               <div style={{ marginTop: '0.75rem' }}>
-                <Field id="notas" name="notas" label="Notas de envío" type="textarea" placeholder="Indique notas para su envío" required={false} />
+                <Field id="notas" name="notas" label="Notas de envío" type="textarea" placeholder="Indique notas para su envío" required={false} value={form.notas} onChange={handleChange} />
               </div>
 
               <div style={{ borderTop: '1px solid var(--border)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
